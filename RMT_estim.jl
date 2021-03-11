@@ -1,17 +1,24 @@
 # using Manifolds, Manopt
 import Polylogarithm: polylog
 
-function estim_fisher(S, Cs, n₂)
+function distance_estimation_fisher(S, Cs, n₂)
+    # S and Cs are symmetric semi definite positive matrices (\lambda >0)
+    # 
     p = size(S, 1)
     F = S \ Cs  # Is it Symmetric
     if sum(isnan(F)) == 0
         c₂ = p / n₂
         λ = sort(real(eig(F)))
         ζ = sort((eig(diag(λ) - (1 / n₂) * sqrt(λ) * sqrt(λ)')))
+        # Replace c1=0 in the expression of out.
         c₁ = 0
+        # Define only once (λ ./ λ') and (ζ ./ λ') before use.
+        # Define (2 / p) * ((λ ./ λ') .* log(abs(λ ./ λ')) ./ (1 - λ ./ λ')) as a function
+        # Use loop to compute the sumation
         ker_vec = (2 / p) * ((λ ./ λ') .* log(abs(λ ./ λ')) ./ (1 - λ ./ λ'))
         ker_vec[isnan(ker_vec)] .= 0
         ker = sum(ker_vec) - 2
+        # For loop for double sumation and divide out into several terms.
         out = real(
                 (2 / p) * sum(sum(((ζ ./ λ') .* log(abs(ζ ./ λ')) ./ (1 - ζ ./ λ'))))
                 - ker
